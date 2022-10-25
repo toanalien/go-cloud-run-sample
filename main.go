@@ -1,0 +1,109 @@
+package main
+
+import (
+	"cloud-run-sample/eth"
+	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"math/big"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+const (
+	NftContract = "0xfF646D99fB94bb20439429c8fe0EE2F58090FA14"
+	BscRpc      = "https://bsc-testnet.nodereal.io/v1/a423305fa58044558bba529cd7a9bb1d"
+)
+
+type (
+	Data struct {
+		Data string `json:"data"`
+	}
+
+	CheckIn struct {
+		Address   string `json:"address"`
+		TokenId   string `json:"token_id"`
+		Signature string `json:"signature"`
+		Contract  string `json:"contract"`
+		Timestamp int    `json:"timestamp"`
+	}
+)
+
+func main() {
+	// Echo instance
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Routes
+	e.GET("/", hello)
+	e.POST("/check-in", checkIn)
+
+	// Start server
+	e.Logger.Fatal(e.Start(":8080"))
+}
+
+func hello(c echo.Context) error {
+	name := os.Getenv("NAME")
+	if name == "" {
+		name = "World"
+	}
+	return c.String(http.StatusOK, fmt.Sprintf("Hello %s!\n", name))
+}
+
+func checkIn(c echo.Context) error {
+	client, err := ethclient.Dial(BscRpc)
+	if err != nil {
+		return err
+	}
+	var data Data
+	if err := c.Bind(&data); err != nil {
+		return err
+	}
+	//address::token_id::signature::timestamp
+	checkInSplit := strings.Split(data.Data, "::")
+	if len(checkInSplit) != 4 || len(checkInSplit[0]) != 42 || len(checkInSplit[3]) != 10 || len(checkInSplit[2]) != 132 {
+		return c.String(http.StatusBadRequest, "invalid data. format: address::token_id::signature::timestamp")
+	}
+	timestamp, err := strconv.Atoi(checkInSplit[3])
+	if err != nil {
+		return err
+	}
+	if timestamp < int(time.Now().Unix())-60 {
+		return c.String(http.StatusBadRequest, "expired")
+	}
+
+	if !eth.VerifySig(checkInSplit[0], checkInSplit[2], []byte(checkInSplit[1])) {
+		return c.String(http.StatusBadRequest, "invalid signature")
+	}
+
+	tokenId, err := strconv.Atoi(checkInSplit[1])
+	nft, err := eth.NewNft(common.HexToAddress(NftContract), client)
+	if err != nil {
+		return err
+	}
+	ownerOf, err := nft.OwnerOf(nil, big.NewInt(int64(tokenId)))
+	if err != nil {
+		return err
+	}
+	if common.HexToAddress(checkInSplit[0]) != ownerOf {
+		return c.String(http.StatusBadRequest, "invalid owner")
+	}
+
+	checkInData := CheckIn{
+		Address:   checkInSplit[0],
+		TokenId:   checkInSplit[1],
+		Signature: checkInSplit[2],
+		Contract:  NftContract,
+		Timestamp: timestamp,
+	}
+	return c.JSON(http.StatusOK, checkInData)
+}
