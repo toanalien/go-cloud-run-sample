@@ -18,7 +18,7 @@ import (
 
 const (
 	NftContract = "0xfF646D99fB94bb20439429c8fe0EE2F58090FA14"
-	BscRpc      = "https://bsc-testnet.nodereal.io/v1/a423305fa58044558bba529cd7a9bb1d"
+	BscRpc      = "https://data-seed-prebsc-1-s1.binance.org:8545"
 )
 
 type (
@@ -42,6 +42,10 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}))
 
 	// Routes
 	e.GET("/", hello)
@@ -81,7 +85,7 @@ func checkIn(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "expired")
 	}
 
-	if !eth.VerifySig(checkInSplit[0], checkInSplit[2], []byte(checkInSplit[1])) {
+	if !eth.VerifySig(checkInSplit[0], checkInSplit[2], []byte(fmt.Sprintf("%s::%s", checkInSplit[1], checkInSplit[3]))) {
 		return c.String(http.StatusBadRequest, "invalid signature")
 	}
 

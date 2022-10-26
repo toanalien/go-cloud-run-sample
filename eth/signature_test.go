@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestSign(t *testing.T) {
@@ -15,14 +16,17 @@ func TestSign(t *testing.T) {
 
 	fmt.Println("Address:", address.Hex())
 
-	messageReplaced := "2"
+	timestamp := int(time.Now().Unix())
+	messageReplaced := fmt.Sprintf("%s::%d", "2", timestamp)
 
 	hashMessage := eth.SignMessage([]byte(messageReplaced))
 	signature := eth.Sign(hashMessage, privateKey)
 
-	fmt.Println("0x" + hex.EncodeToString(signature))
+	signatureHex := "0x" + hex.EncodeToString(signature)
 
-	fmt.Println(eth.RecoverSig("0x"+hex.EncodeToString(signature), []byte(messageReplaced)).Hex())
+	fmt.Println(eth.RecoverSig(signatureHex, []byte(messageReplaced)).Hex())
 
-	fmt.Println(eth.VerifySig(address.Hex(), "0x"+hex.EncodeToString(signature), []byte(messageReplaced)))
+	fmt.Println(eth.VerifySig(address.Hex(), signatureHex, []byte(messageReplaced)))
+
+	fmt.Printf("%s::%s::%s::%d", address.Hex(), "2", signatureHex, timestamp)
 }
