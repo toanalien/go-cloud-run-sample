@@ -1,5 +1,7 @@
 SHELL=/bin/bash
 
+.PHONY: build deploy clean
+
 PATH_CURRENT := $(shell pwd)
 PATH_BUILT := $(PATH_CURRENT)/build/server
 
