@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"math/big"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
@@ -49,6 +48,7 @@ func main() {
 
 	// Routes
 	e.GET("/", hello)
+	e.GET("/time", timeNow)
 	e.POST("/check-in", checkIn)
 
 	// Start server
@@ -61,6 +61,10 @@ func hello(c echo.Context) error {
 		name = "World"
 	}
 	return c.String(http.StatusOK, fmt.Sprintf("Hello %s!\n", name))
+}
+
+func timeNow(c echo.Context) error {
+	return c.String(http.StatusOK, fmt.Sprintf("Now %s!\n", time.Now().String()))
 }
 
 func checkIn(c echo.Context) error {

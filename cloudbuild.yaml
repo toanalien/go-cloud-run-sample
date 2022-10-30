@@ -1,7 +1,7 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'build', '-t', 'gcr.io/gochain/cloud-run/go-cloud-run-sample', '.' ]
+    args: [ '.out', '-t', 'gcr.io/gochain/cloud-run/go-cloud-run-sample', '.' ]
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: [ 'push', 'gcr.io/gochain/cloud-run/go-cloud-run-sample' ]
