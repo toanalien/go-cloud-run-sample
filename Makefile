@@ -9,7 +9,7 @@ all:
 	deploy
 
 build:
-	go build -v -o ./build/server
+	env GOOS=linux GOARCH=amd64 go build -v -o ./build/server
 
 deploy:
 	@if [ "$(wildcard $(PATH_BUILT))" != "" ]; then\
