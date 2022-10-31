@@ -14,10 +14,6 @@ build-linux:
 	echo "current commit: ${GIT_COMMIT_LOG}"
 	env GOOS=linux GOARCH=amd64 go build -v -o ./build/server -ldflags "-X 'main.GitCommitLog=${GIT_COMMIT_LOG}'"
 
-build:
-	echo "current commit: ${GIT_COMMIT_LOG}"
-	go build -v -o ./build/server -ldflags "-X 'main.GitCommitLog=${GIT_COMMIT_LOG}'"
-
 deploy: build-linux
 	gcloud run deploy --source . --region asia-southeast1 --project ${GCP_PROJECT}; \
 	echo "Done deploy."
@@ -26,5 +22,8 @@ clean:
 	rm -fr "${PATH_BUILT}"; \
 	echo "Clean built."
 
+build:
+	go build -v -o ./build/server-local -ldflags "-X 'main.GitCommitLog=${GIT_COMMIT_LOG}'"
+
 dev: build
-	./build/server
+	./build/server-local
