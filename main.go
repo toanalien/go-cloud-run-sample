@@ -15,6 +15,13 @@ import (
 	"time"
 )
 
+// GitCommitLog is set at build-time
+var GitCommitLog string
+
+func init() {
+	fmt.Printf("GIT log: %s\n", GitCommitLog)
+}
+
 const (
 	NftContract = "0xfF646D99fB94bb20439429c8fe0EE2F58090FA14"
 	BscRpc      = "https://data-seed-prebsc-1-s1.binance.org:8545"
@@ -48,6 +55,9 @@ func main() {
 
 	// Routes
 	e.GET("/", hello)
+	e.GET("/git", func(c echo.Context) error {
+		return c.String(http.StatusOK, fmt.Sprintf("GIT log: %s\n", GitCommitLog))
+	})
 	e.GET("/time", timeNow)
 	e.POST("/check-in", checkIn)
 
